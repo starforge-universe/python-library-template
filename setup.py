@@ -7,16 +7,18 @@ here = pathlib.Path(__file__).parent.resolve()
 
 def load_requirements():
     try:
-        with open(os.environ['REQUIREMENTS'], 'r') as f:
+        with open(file=os.environ['REQUIREMENTS'], mode='r', encoding="utf-8") as f:
             return f.read().splitlines()
-    except IndexError:
-        raise ValueError("Error: You must specify 'REQUIREMENTS' variable with full path of requirements.txt")
+    except IndexError as e:
+        raise ValueError(
+            "Error: You must specify 'REQUIREMENTS' variable with full path of requirements.txt"
+        ) from e
 
 def extract_version() -> str:
     try:
         return os.environ['VERSION']
-    except IndexError:
-        raise ValueError("Error: You must specify 'VERSION' variable with version number")
+    except IndexError as e:
+        raise ValueError("Error: You must specify 'VERSION' variable with version number") from e
 
 long_description = (here / "README.md").read_text(encoding="utf-8")
 
