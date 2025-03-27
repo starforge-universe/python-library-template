@@ -23,3 +23,7 @@ jobs:
     uses: ./.github/workflows/__call__release.yaml
     with:
       level: ${{ inputs.level }}
+      pypi_repository: ${{ vars.pypi_repository }}
+    secrets:
+      pypi_username: ${{ secrets.pypi_username }}
+      pypi_password: ${{ secrets.pypi_password }}

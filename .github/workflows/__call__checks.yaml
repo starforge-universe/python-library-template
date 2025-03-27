@@ -4,9 +4,43 @@ on:
   workflow_call:
 
 jobs:
-  test:
-    name: 'Test'
+  pylint:
+    name: 'Pylint'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout project sources'
         uses: actions/checkout@v4
+
+      - name: 'Setup Python 3.10'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: 'Install requirements'
+        run: pip install -r ./tests/test-requirements.txt
+
+      - name: 'Install Pylint'
+        run: pip install pylint
+
+      - name: 'Run Pylint'
+        run: pylint $(git ls-files '*.py')
+
+  unitTest:
+    name: 'Unit Test'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout project sources'
+        uses: actions/checkout@v4
+
+      - name: 'Setup Python 3.10'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: 'Install requirements'
+        run: pip install -r ./tests/test-requirements.txt
+
+      - name: 'Test with unittest'
+        run: python -m unittest discover -v -s ./tests -p 'test_*.py'

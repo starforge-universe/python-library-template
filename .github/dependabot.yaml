@@ -1,5 +1,11 @@
 version: 2
 updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    reviewers:
+      - "StarForgeWorker"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

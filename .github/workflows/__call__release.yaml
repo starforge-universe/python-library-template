@@ -8,6 +8,17 @@ on:
         description: 'Version level to increase'
         type: string
         default: 'patch'
+      pypi_repository:
+        required: true
+        description: 'Pypi repository URL'
+        type: string
+    secrets:
+      pypi_username:
+        required: true
+        description: 'Pypi repository username'
+      pypi_password:
+        required: true
+        description: 'Pypi repository password'
 
 jobs:
   release:
@@ -31,6 +42,27 @@ jobs:
         with:
           version: ${{ steps.latest_version.outputs.version }}
           level: ${{ inputs.level }}
+
+      - name: 'Setup Python 3.10'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: 'Install publishing infrastructure'
+        run: pip install build twine
+
+      - name: 'Build package'
+        run: python3 -m build
+        env:
+          VERSION: ${{ steps.increased_version.outputs.version }}
+          REQUIREMENTS: ${{ github.workspace }}/requirements.txt
+
+      - name: 'Check distribution'
+        run: twine check dist/*
+
+      - name: 'Upload package'
+        run: twine upload --repository-url ${{ inputs.pypi_repository }} -u ${{ secrets.pypi_username }} -p ${{ secrets.pypi_password }} dist/*
 
       - name: 'Tag with new version'
         id: tag-commit
