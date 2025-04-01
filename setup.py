@@ -31,8 +31,7 @@ setup(
     author='Starforge Worker',
     author_email='star.forge.worker@gmail.com',
     url='https://github.com/starforge-universe/python-library-template',
-    package_dir={"": "src"},
-    packages=find_packages(where="src"),
+    packages=find_packages(),
     python_requires='>=3.10',
     install_requires=load_requirements(),
     classifiers=[

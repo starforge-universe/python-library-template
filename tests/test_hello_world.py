@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from src.starforge_library_template.hello_world import HelloWorld
+from starforge_library_template.hello_world import HelloWorld
 
 
 class TestHelloWorld(TestCase):
