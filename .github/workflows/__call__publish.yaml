@@ -2,11 +2,45 @@ name: 'Submodule - Publish'
 
 on:
   workflow_call:
+    inputs:
+      pypi-repository:
+        description: 'PyPI repository URL'
+        required: false
+        type: string
+        default: 'https://pypi.org/simple/'
+    secrets:
+      pypi-username:
+        required: true
+      pypi-password:
+        required: true
 
 jobs:
   publish:
-    name: 'Publish'
+    name: 'Publish to PyPI'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout project sources'
         uses: actions/checkout@v5
+        # Required for pyproject.toml access and version consistency
+
+      - name: 'Download build artifacts'
+        uses: actions/download-artifact@v5
+        with:
+          name: python-package
+          path: dist/
+
+      - name: 'Setup Python 3.10'
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: 'Install twine'
+        run: pip install twine
+
+      - name: 'Publish to PyPI'
+        run: |
+          PYPI_REPOSITORY=${{ inputs.pypi-repository }} \
+          PYPI_USERNAME=${{ secrets.pypi-username }} \
+          PYPI_PASSWORD=${{ secrets.pypi-password }} \
+          make upload-pypi

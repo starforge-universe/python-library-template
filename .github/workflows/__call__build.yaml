@@ -2,6 +2,12 @@ name: 'Submodule - Build'
 
 on:
   workflow_call:
+    inputs:
+      version:
+        description: 'Version to build'
+        required: false
+        type: string
+        default: '0.1.0'
 
 jobs:
   build:
@@ -10,3 +16,56 @@ jobs:
     steps:
       - name: 'Checkout project sources'
         uses: actions/checkout@v5
+
+      - name: 'Show build information'
+        run: |
+          echo "Building package with version: ${{ inputs.version }}"
+          echo "Current pyproject.toml version:"
+          grep "^version = " pyproject.toml
+
+      - name: 'Setup Python 3.10'
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: 'Install build dependencies'
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: 'Update version in pyproject.toml'
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            # Update version in pyproject.toml
+            sed -i "s/^version = \".*\"/version = \"${{ inputs.version }}\"/" pyproject.toml
+            echo "Updated version to ${{ inputs.version }} in pyproject.toml"
+            cat pyproject.toml | grep "^version ="
+          fi
+        env:
+          VERSION: ${{ inputs.version }}
+
+      - name: 'Build package'
+        run: make build
+
+      - name: 'Verify version in built package'
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            echo "Verifying built package version..."
+            # Check the wheel file version
+            WHEEL_FILE=$(find dist/ -name "*.whl" | head -1)
+            if [ -n "$WHEEL_FILE" ]; then
+              echo "Built wheel file: $WHEEL_FILE"
+              echo "Expected version: ${{ inputs.version }}"
+            fi
+          fi
+
+      - name: 'Check distribution'
+        run: make check-dist
+
+      - name: 'Upload build artifacts'
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package
+          path: dist/
+          retention-days: 30
