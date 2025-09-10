@@ -1,0 +1,135 @@
+name: 'Release'
+
+on:
+  push:
+    branches:
+      - 'release/*'
+
+jobs:
+  # Extract version from branch name
+  extract-version:
+    name: 'Extract Version'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.extract.outputs.version }}
+    steps:
+      - name: 'Extract version from branch name'
+        id: extract
+        run: |
+          BRANCH_NAME="${{ github.ref_name }}"
+          VERSION=${BRANCH_NAME#release/}
+          
+          # Validate version format (basic semantic version check)
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Invalid version format '$VERSION'. Expected format: X.Y.Z"
+            exit 1
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION from branch: $BRANCH_NAME"
+
+  # Run checks first
+  checks:
+    name: 'Run Checks'
+    needs: extract-version
+    uses: ./.github/workflows/__call__checks.yaml
+
+  # Build package with extracted version
+  # The build workflow will:
+  # 1. Update pyproject.toml with the extracted version
+  # 2. Build the package using the updated version
+  # 3. Verify the built package has the correct version
+  build:
+    name: 'Build Package'
+    needs: [extract-version, checks]
+    uses: ./.github/workflows/__call__build.yaml
+    with:
+      version: ${{ needs.extract-version.outputs.version }}
+
+  # Publish to Test PyPI
+  publish-test:
+    name: 'Publish to Test PyPI'
+    needs: [build]
+    if: github.ref_type == 'branch' && startsWith(github.ref_name, 'release/')
+    environment: 'test'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout project sources'
+        uses: actions/checkout@v5
+
+      - name: 'Download build artifacts'
+        uses: actions/download-artifact@v5
+        with:
+          name: python-package
+          path: dist/
+
+      - name: 'Setup Python 3.10'
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: 'Install twine'
+        run: pip install twine
+
+      - name: 'Publish to Test PyPI'
+        run: |
+          PYPI_REPOSITORY=${{ vars.PYPI_REPOSITORY || 'https://test.pypi.org/legacy/' }} \
+          PYPI_USERNAME=${{ secrets.PYPI_USERNAME }} \
+          PYPI_PASSWORD=${{ secrets.PYPI_PASSWORD }} \
+          make upload-pypi
+
+  # Publish to Production PyPI
+  publish-production:
+    name: 'Publish to Production PyPI'
+    needs: [publish-test]
+    if: github.ref_type == 'branch' && startsWith(github.ref_name, 'release/')
+    environment: 'production'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout project sources'
+        uses: actions/checkout@v5
+
+      - name: 'Download build artifacts'
+        uses: actions/download-artifact@v5
+        with:
+          name: python-package
+          path: dist/
+
+      - name: 'Setup Python 3.10'
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: 'Install twine'
+        run: pip install twine
+
+      - name: 'Publish to Production PyPI'
+        run: |
+          PYPI_REPOSITORY=${{ vars.PYPI_REPOSITORY || 'https://pypi.org/simple/' }} \
+          PYPI_USERNAME=${{ secrets.PYPI_USERNAME }} \
+          PYPI_PASSWORD=${{ secrets.PYPI_PASSWORD }} \
+          make upload-pypi
+
+  # Create release tag
+  tag-release:
+    name: 'Tag Release'
+    needs: [extract-version, publish-production]
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'branch' && startsWith(github.ref_name, 'release/')
+    permissions:
+      contents: write
+    steps:
+      - name: 'Checkout project sources'
+        uses: actions/checkout@v5
+
+      - name: 'Create and push tag'
+        run: |
+          VERSION="${{ needs.extract-version.outputs.version }}"
+          if [ -n "$VERSION" ]; then
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git tag -a "v$VERSION" -m "Release version $VERSION"
+            git push origin "v$VERSION"
+          fi
