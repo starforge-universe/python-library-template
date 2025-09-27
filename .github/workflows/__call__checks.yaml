@@ -3,6 +3,9 @@ name: 'Submodule - Check'
 on:
   workflow_call:
 
+env:
+  PYTHON_VERSION: '3.11'
+
 jobs:
   pylint:
     name: 'Pylint'
@@ -11,10 +14,10 @@ jobs:
       - name: 'Checkout project sources'
         uses: actions/checkout@v5
 
-      - name: 'Setup Python 3.10'
+      - name: 'Setup Python ${{ env.PYTHON_VERSION }}'
         uses: actions/setup-python@v6
         with:
-          python-version: '3.10'
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
 
       - name: 'Install dependencies'
@@ -32,10 +35,10 @@ jobs:
       - name: 'Checkout project sources'
         uses: actions/checkout@v5
 
-      - name: 'Setup Python 3.10'
+      - name: 'Setup Python ${{ env.PYTHON_VERSION }}'
         uses: actions/setup-python@v6
         with:
-          python-version: '3.10'
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
 
       - name: 'Install dependencies'
@@ -53,10 +56,10 @@ jobs:
       - name: 'Checkout project sources'
         uses: actions/checkout@v5
 
-      - name: 'Setup Python 3.10'
+      - name: 'Setup Python ${{ env.PYTHON_VERSION }}'
         uses: actions/setup-python@v6
         with:
-          python-version: '3.10'
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
 
       - name: 'Install dependencies'
