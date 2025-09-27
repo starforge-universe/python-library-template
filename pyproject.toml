@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools==78.1.0", "wheel==0.45.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -33,15 +33,15 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pylint>=3.0.0",
-    "coverage>=7.0.0",
-    "sphinx>=6.0.0",
-    "sphinx-rtd-theme>=1.2.0",
-    "build>=0.10.0",
-    "twine>=4.0.0",
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
-    "pytest-mock>=3.10.0",
+    "pylint==3.3.6",
+    "coverage==7.10.6",
+    "sphinx==8.2.3",
+    "sphinx-rtd-theme==3.0.2",
+    "build==1.2.2.post1",
+    "twine==6.1.0",
+    "pytest==8.4.2",
+    "pytest-cov==7.0.0",
+    "pytest-mock==3.15.0",
 ]
 
 [project.urls]
