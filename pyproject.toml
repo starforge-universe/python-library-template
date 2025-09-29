@@ -34,7 +34,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pylint==3.3.6",
-    "coverage==7.10.6",
+    "coverage==7.10.7",
     "sphinx==8.2.3",
     "sphinx-rtd-theme==3.0.2",
     "build==1.2.2.post1",
