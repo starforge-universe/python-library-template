@@ -61,7 +61,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: 'Download build artifacts'
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: python-package
           path: dist/
@@ -94,7 +94,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: 'Download build artifacts'
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: python-package
           path: dist/
