@@ -17,7 +17,7 @@ jobs:
           echo "github.event.workflow_run.actor: ${{ github.event.workflow_run.actor }}"
           echo ""
           echo "Full github.event.workflow_run JSON:"
-          echo '${{ toJson(github.event.workflow_run) }}'
+          echo '${{ toJson(github.event) }}'
           
       - name: 'Merge the pull request'
         if: >
