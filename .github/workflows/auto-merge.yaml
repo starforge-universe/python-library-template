@@ -10,12 +10,14 @@ jobs:
     name: 'Merge'
     runs-on: ubuntu-latest
     steps:
-      - name: 'Debug'
+      - name: 'Pull request information'
         run: |
           echo "github.event.workflow_run.event: ${{ github.event.workflow_run.event }}"
           echo "github.event.workflow_run.conclusion: ${{ github.event.workflow_run.conclusion }}"
           echo "github.event.workflow_run.actor.login: ${{ github.event.workflow_run.actor.login }}"
-      - name: 'Merge the pull request'
+          echo "github.event.workflow_run.head_sha: ${{ github.event.workflow_run.head_sha }}"
+      - name: 'Find pull request'
+        id: find-pr
         if: >
           github.event.workflow_run.event == 'pull_request' &&
           github.event.workflow_run.conclusion == 'success' &&
@@ -42,6 +44,16 @@ jobs:
           fi
           
           echo "Found PR #$PR_NUMBER for head branch: $HEAD_BRANCH"
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+      - name: 'Merge the pull request'
+        if: >
+          github.event.workflow_run.event == 'pull_request' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.actor.login == 'dependabot[bot]'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.find-pr.outputs.pr_number }}
+        run: |
           echo "Merging PR #$PR_NUMBER"
           curl -X PUT \
                -H "Authorization: Bearer $GITHUB_TOKEN" \
