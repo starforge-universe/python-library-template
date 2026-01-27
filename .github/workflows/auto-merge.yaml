@@ -1,10 +1,13 @@
-name: 'Auto Merge'
+name: 'Auto Merge Dependabot PRs'
 
 on:
   workflow_run:
     workflows: [ 'Pull request checks' ]
     types: [ completed ]
 
+permissions:
+  contents: write
+  pull-requests: write
 jobs:
   merge:
     name: 'Merge'
@@ -56,25 +59,44 @@ jobs:
         run: |
           echo "Checking if PR #$PR_NUMBER is mergeable..."
           
-          # Fetch PR details to check mergeable status
-          PR_DETAILS=$(curl -s \
-            -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER)
+          # Maximum number of retry attempts (12 attempts = 60 seconds total wait time)
+          MAX_ATTEMPTS=12
+          ATTEMPT=1
+          MERGEABLE="null"
           
-          MERGEABLE=$(echo "$PR_DETAILS" | jq -r '.mergeable // "null"')
-          
-          if [ "$MERGEABLE" = "null" ]; then
-            echo "PR mergeability is still being calculated. Waiting..."
-            # Wait a bit and retry (GitHub may need time to calculate)
-            sleep 5
+          # Loop until mergeable status is determined or max attempts reached
+          while [ "$MERGEABLE" = "null" ] && [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+            echo "Attempt $ATTEMPT/$MAX_ATTEMPTS: Checking mergeable status..."
+            
+            # Fetch PR details to check mergeable status
             PR_DETAILS=$(curl -s \
               -H "Authorization: Bearer $GITHUB_TOKEN" \
               -H "Accept: application/vnd.github+json" \
               https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER)
+            
             MERGEABLE=$(echo "$PR_DETAILS" | jq -r '.mergeable // "null"')
+            
+            if [ "$MERGEABLE" = "null" ]; then
+              if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+                echo "PR mergeability is still being calculated. Waiting 5 seconds before retry..."
+                sleep 5
+              fi
+              ATTEMPT=$((ATTEMPT + 1))
+            else
+              echo "Mergeable status determined: $MERGEABLE"
+              break
+            fi
+          done
+          
+          # Check if we exhausted all attempts without getting a status
+          if [ "$MERGEABLE" = "null" ]; then
+            echo "ERROR: Could not determine mergeable status after $MAX_ATTEMPTS attempts"
+            echo "PR state: $(echo "$PR_DETAILS" | jq -r '.state')"
+            echo "PR mergeable_state: $(echo "$PR_DETAILS" | jq -r '.mergeable_state // "unknown"')"
+            exit 1
           fi
           
+          # Check if PR is actually mergeable
           if [ "$MERGEABLE" != "true" ]; then
             echo "PR #$PR_NUMBER is not mergeable (status: $MERGEABLE)"
             echo "PR state: $(echo "$PR_DETAILS" | jq -r '.state')"
