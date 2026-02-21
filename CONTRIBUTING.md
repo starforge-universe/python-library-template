@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for your interest in contributing to the DevOps Template! This is a project skeleton repository focusing on DevOps template elements implemented in GitHub Workflows.
+Thank you for your interest in contributing to the Starforge Python Library Template! This is a production-ready Python library template providing a complete foundation for building, testing, and publishing Python libraries with modern tooling and best practices.
 
 ## How to Contribute
 
@@ -13,13 +13,13 @@ To contribute improvements to this template, follow the traditional fork-based w
 
 2. **Clone your fork locally**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/devops-template.git
-   cd devops-template
+   git clone https://github.com/YOUR_USERNAME/python-library-template.git
+   cd python-library-template
    ```
 
 3. **Add the original repository as upstream**
    ```bash
-   git remote add upstream https://github.com/starforge-universe/devops-template.git
+   git remote add upstream https://github.com/starforge-universe/python-library-template.git
    ```
 
 4. **Create a feature branch**
@@ -29,7 +29,7 @@ To contribute improvements to this template, follow the traditional fork-based w
 
 5. **Make your changes**
    - Follow the existing code style and patterns
-   - Ensure your changes align with the template's purpose
+   - Ensure your changes align with the Python library template's purpose
    - Update documentation if needed
 
 6. **Commit and push to your fork**
