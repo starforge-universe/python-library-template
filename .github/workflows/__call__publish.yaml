@@ -16,6 +16,7 @@ jobs:
   publish:
     name: 'Publish'
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     steps:
       - name: 'Checkout project sources'
         uses: actions/checkout@v6
