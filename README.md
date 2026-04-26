@@ -1,10 +1,10 @@
-# DevOps Template
+# Starforge Library Template
 
-A project skeleton repository focusing on DevOps template elements implemented in GitHub Workflows. This repository provides reusable workflows and automation tools for DevOps practices, including standardized CI/CD workflows, automated dependency management, and pull request automation.
+A centralized template for library implementations across the Starforge Universe ecosystem. This repository provides reusable workflows, release automation, and a solid versioning framework aligned with git branching and labeling strategies, so teams can consistently release and publish public packages.
 
 ## Overview
 
-This repository serves as a project skeleton containing DevOps template elements implemented as GitHub Actions workflows. It is designed to be reused as a base for new projects **while preserving git history**, allowing template updates to be merged and adopted later. The repository includes reusable GitHub Actions workflows, automated dependency updates via Dependabot, and automated merge workflows for dependency updates.
+This repository serves as a project skeleton for building libraries with shared implementation standards and GitHub Actions automation. It is designed to be reused as a base for new projects **while preserving git history**, allowing template updates to be merged and adopted later. The template includes reusable workflows, automated dependency updates, and a versioning approach that works together with branch strategy and labels to support repeatable release and package publishing flows.
 
 ## Features
 

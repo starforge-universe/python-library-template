@@ -1,105 +1,97 @@
 # Contributing
 
-Thank you for your interest in contributing to the DevOps Template! This is a project skeleton repository focusing on DevOps template elements implemented in GitHub Workflows.
+Thank you for contributing to the Starforge Library Template. This repository provides a centralized foundation for library implementations, including reusable workflows and a versioning model that works with git branching and labels for release and public package publishing.
 
 ## How to Contribute
 
-To contribute improvements to this template, follow the traditional fork-based workflow:
+Use a standard fork-based workflow:
 
 1. **Fork the repository on GitHub**
-   - Navigate to the repository on GitHub
-   - Click the "Fork" button in the top-right corner
-   - This creates a copy of the repository under your GitHub account
+   - Create a fork under your GitHub account.
 
 2. **Clone your fork locally**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/devops-template.git
-   cd devops-template
+   git clone https://github.com/YOUR_USERNAME/starforge-library-template.git
+   cd starforge-library-template
    ```
 
-3. **Add the original repository as upstream**
+3. **Add upstream remote**
    ```bash
-   git remote add upstream https://github.com/starforge-universe/devops-template.git
+   git remote add upstream https://github.com/starforge-universe/starforge-library-template.git
    ```
 
-4. **Create a feature branch**
+4. **Create a feature branch from main**
    ```bash
-   git checkout -b feature/your-feature-name
+   git checkout main
+   git fetch upstream
+   git merge upstream/main
+   git checkout -b feature/your-change
    ```
 
-5. **Make your changes**
-   - Follow the existing code style and patterns
-   - Ensure your changes align with the template's purpose
-   - Update documentation if needed
+5. **Implement your changes**
+   - Keep changes aligned with the template purpose.
+   - Preserve compatibility with reusable workflows.
+   - Update documentation when behavior or usage changes.
 
-6. **Commit and push to your fork**
+6. **Run checks before pushing**
+   - Ensure pull request checks pass locally where possible.
+   - Validate release/versioning related changes carefully.
+
+7. **Commit and push**
    ```bash
    git add .
-   git commit -m "Description of your changes"
-   git push origin feature/your-feature-name
+   git commit -m "Describe your template change"
+   git push origin feature/your-change
    ```
 
-7. **Open a pull request on GitHub**
-   - Navigate to your fork on GitHub
-   - Click "New Pull Request"
-   - Select your feature branch to merge into the original repository's main branch
-   - Provide a clear description of your changes
-   - Reference any related issues
+8. **Open a pull request**
+   - Target `main` in `starforge-universe/starforge-library-template`.
+   - Explain what changed and why.
+   - Reference any related issues.
 
-8. **Ensure pull request checks pass**
-   - The repository includes automated pull request checks (see `.github/workflows/pull-request-check.yaml`)
-   - **All checks must pass without errors** before the pull request can be merged
-   - You can run checks locally using `./.github/workflows/__call__checks.yaml` before pushing
-   - If checks fail, address the issues and push additional commits to update the pull request
+9. **Address review feedback**
+   - All checks must pass.
+   - Code owner approval is required before merge.
 
-9. **Wait for code owner approval**
-   - All changes require approval from code owners (defined in `.github/CODEOWNERS`)
-   - Address any feedback or requested changes
-   - Once approved and all checks pass, your pull request will be merged
+## Branching, Labels, and Versioning
 
-### Keeping Your Fork Up to Date
+This template is designed to support reliable releases by combining:
 
-Before starting new work, sync your fork with the upstream repository:
+- A clear branching model (main + feature branches)
+- Pull request labels that signal change type and release intent
+- Workflow-driven release and publish automation
 
-```bash
-git checkout main
-git fetch upstream
-git merge upstream/main
-git push origin main
-```
+When contributing changes that may affect release behavior:
 
-This ensures your fork has the latest changes from the original repository.
+- Call out expected version impact in the pull request.
+- Apply the appropriate labels used by your release flow.
+- Confirm publish/release workflow assumptions in your PR description.
 
 ## Pull Request Checks
 
-This project includes automated pull request checks that run on every pull request:
+This repository includes automated pull request validation and reusable checks workflows.
 
-- **Pull Request Checks Workflow** (`.github/workflows/pull-request-check.yaml`) - Validates pull requests to the main branch
-- **Reusable Checks** (`.github/workflows/__call__checks.yaml`) - Executes test and validation workflows
+Before requesting review:
 
-**Important**: All pull request checks must complete successfully without errors before a pull request can be merged. Make sure to:
-- Run checks locally before pushing
-- Address any failing checks
-- Ensure all automated tests pass
+- Ensure all CI checks are green.
+- Resolve linting/test failures.
+- Re-run workflows after force-pushes or conflict resolution.
 
 ## Git History Preservation
 
-**Important**: When using this repository as a base for your project, maintain the git history by **cloning** the repository rather than using GitHub's "Use this template" feature or creating a fresh repository.
+When adopting this template in a downstream project, preserve git history by cloning the repository and maintaining a `template` remote. This enables regular template merges while retaining project-specific customizations.
 
-Cloning preserves all commit history, enabling continuous adoption of template updates through git merge operations. This allows you to:
-- Merge template improvements into your project
-- Maintain a connection to the original template repository
-- Track the evolution of your project alongside template updates
+See [README.md](README.md) and [.github/merge-instructions.md](.github/merge-instructions.md) for the recommended update flow.
 
 ## Code of Conduct
 
-- Be respectful and considerate in all interactions
-- Provide constructive feedback
-- Follow the project's coding standards and guidelines
+- Be respectful and constructive.
+- Keep feedback actionable.
+- Prefer small, focused pull requests.
 
-## Questions?
+## Questions
 
-If you have questions or need help, please:
-- Open an issue for discussion
-- Contact the code owners
-- Review the [README.md](README.md) for more information about the project
+If you need help:
+
+- Open an issue for discussion.
+- Contact code owners listed in `.github/CODEOWNERS`.

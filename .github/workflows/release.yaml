@@ -1,25 +1,139 @@
 name: 'Release'
 
 on:
-  workflow_dispatch:
-    inputs:
-      level:
-        required: true
-        description: 'Version level to increase'
-        type: choice
-        options:
-          - major
-          - minor
-          - patch
+  push:
+    branches:
+      - 'release/*.*.x'
+
 
 jobs:
-  test:
-    name: 'Tests'
+  # Extract version from branch name
+  extract-version:
+    name: 'Extract Version'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.patch.outputs.version }}
+      dev-number: ${{ steps.dev-number.outputs.value }}
+    steps:
+      - name: 'Checkout project sources'
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Extract major/minor from branch name
+        id: version
+        run: |
+          BRANCH="${{ github.ref_name }}"   # e.g. release/1.4.x
+
+          if [[ "$BRANCH" =~ ^release/([0-9]+)\.([0-9]+)\.x$ ]]; then
+            MAJOR="${BASH_REMATCH[1]}"
+            MINOR="${BASH_REMATCH[2]}"
+          else
+            echo "Invalid release branch format: $BRANCH"
+            echo "Expected: release/<major>.<minor>.x"
+            exit 1
+          fi
+
+          echo "MAJOR=$MAJOR" >> "$GITHUB_OUTPUT"
+          echo "MINOR=$MINOR" >> "$GITHUB_OUTPUT"
+      
+      - name: Determine next patch version
+        id: patch
+        run: |
+          MAJOR=${{ steps.version.outputs.MAJOR }}
+          MINOR=${{ steps.version.outputs.MINOR }}
+  
+          # Find existing tags like v1.4.*
+          TAGS=$(git tag --list "v${MAJOR}.${MINOR}.*")
+
+          PATCHES=$(
+            echo "$TAGS" \
+              | sed -nE "s/^v${MAJOR//./\\.}\.${MINOR//./\\.}\.([0-9]+)$/\1/p" \
+              | sort -n
+          )
+  
+          if [ -z "$PATCHES" ]; then
+            PATCH=0
+          else
+            # Pick highest numeric patch and increment it
+            PATCH=$(echo "$PATCHES" | tail -1)
+            PATCH=$((PATCH + 1))
+          fi
+  
+          VERSION="${MAJOR}.${MINOR}.${PATCH}"
+  
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Next version: $VERSION"
+
+      - name: Compute dev number from run and attempt
+        id: dev-number
+        run: |
+          DEV_NUMBER=$((GITHUB_RUN_NUMBER * 100 + GITHUB_RUN_ATTEMPT))
+          echo "value=${DEV_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "Dev number: $DEV_NUMBER"
+
+  # Run checks first
+  checks:
+    name: 'Run Checks'
+    needs: [extract-version]
     uses: ./.github/workflows/__call__checks.yaml
 
-  release:
-    name: 'Release'
-    needs: [test]
-    uses: ./.github/workflows/__call__release.yaml
+  build-test:
+    name: 'Build Test Package'
+    needs: [extract-version, checks]
+    uses: ./.github/workflows/__call__build.yaml
     with:
-      level: ${{ inputs.level }}
+      version: '${{ needs.extract-version.outputs.version }}.dev${{ needs.extract-version.outputs.dev-number }}'
+      artifact-name: 'package-test'
+  
+    # Publish to Test Environment
+  publish-test:
+    name: 'Publish to Test'
+    needs: [extract-version, build-test]
+    if: github.ref_type == 'branch' && startsWith(github.ref_name, 'release/')
+    uses: ./.github/workflows/__call__publish.yaml
+    with:
+      environment: 'test'
+      artifact-name: 'package-test'
+
+  build-production:
+    name: 'Build Production Package'
+    needs: [extract-version, publish-test]
+    uses: ./.github/workflows/__call__build.yaml
+    with:
+      version: ${{ needs.extract-version.outputs.version }}
+      artifact-name: 'package-production'
+
+  # Publish to Production Environment
+  publish-production:
+    name: 'Publish to Production'
+    needs: [build-production]
+    if: github.ref_type == 'branch' && startsWith(github.ref_name, 'release/')
+    uses: ./.github/workflows/__call__publish.yaml
+    with:
+      environment: 'production'
+      artifact-name: 'package-production'
+
+  # Create release tag
+  tag-release:
+    name: 'Tag Release'
+    needs: [extract-version, publish-test, publish-production]
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'branch' && startsWith(github.ref_name, 'release/')
+    permissions:
+      contents: write
+    steps:
+      - name: 'Checkout project sources'
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: 'Create and push tag'
+        run: |
+          VERSION="${{ needs.extract-version.outputs.version }}"
+          if [ -n "$VERSION" ]; then
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git tag -a "v$VERSION" -m "Release version $VERSION"
+            git push origin "v$VERSION"
+          fi
