@@ -1,143 +1,152 @@
 # Starforge Library Template
 
-A centralized template for library implementations across the Starforge Universe ecosystem. This repository provides reusable workflows, release automation, and a solid versioning framework aligned with git branching and labeling strategies, so teams can consistently release and publish public packages.
+A centralized template for library implementations across the Starforge Universe ecosystem. This repository provides reusable GitHub Actions workflows, a release pipeline tied to **release branches** and **git tags**, and GitHub **Environments** for test and production publishing so you can version and ship public packages in a consistent way.
+
+**Canonical repository:** [github.com/starforge-universe/starforge-library-template](https://github.com/starforge-universe/starforge-library-template)
 
 ## Overview
 
-This repository serves as a project skeleton for building libraries with shared implementation standards and GitHub Actions automation. It is designed to be reused as a base for new projects **while preserving git history**, allowing template updates to be merged and adopted later. The template includes reusable workflows, automated dependency updates, and a versioning approach that works together with branch strategy and labels to support repeatable release and package publishing flows.
+This project is a **reusable source template**, not a published library on its own. It gives you shared automation and conventions for building, checking, and releasing libraries, while you keep **project-specific** code, package metadata, and policy in a fork or downstream repo.
+
+The template is designed to be adopted **with git history preserved** (clone and retarget `origin`, not the “Use this template” flow without history) so you can still merge updates from a **`template` remote** when you need new automation from upstream Starforge template repos.
+
+**Current automation at a glance**
+
+| Area | What you get |
+|------|----------------|
+| **CI on PRs** | `pull-request-check.yaml` runs reusable checks on pull requests to `main`. |
+| **Reusable jobs** | `__call__checks`, `__call__build`, `__call__publish` are called from your orchestrating workflows. |
+| **Releases** | `release.yaml` runs on pushes to `release/*.*.x` branches, bumps patch from existing `v*` tags, runs test and production build/publish, then tags `v<version>`. |
+| **Repo hygiene** | Dependabot for Actions, auto-merge for Dependabot PRs when policy allows, `CODEOWNERS` for review routing. |
+
+## Versioning, branches, and releases
+
+Releases are driven by **branch name** and **existing release tags**, not by manual `workflow_dispatch` in this template.
+
+1. **Release line branch**  
+   Use branches named `release/<major>.<minor>.x` (example: `release/1.4.x`). Pushing to such a branch triggers [`.github/workflows/release.yaml`](.github/workflows/release.yaml).
+
+2. **Next version**  
+   The workflow reads `<major>.<minor>` from the branch name, then sets **patch** to one higher than the latest matching tag `v<major>.<minor>.*` in the repo. The release version is `major.minor.patch` and the workflow creates an annotated tag `v<version>` on success.
+
+3. **Test vs production**  
+   A **test** package build uses a `.dev<run-based-suffix>` version for separation from release numbers. Publish jobs use GitHub **Environments** `test` and `production` (see `__call__publish.yaml`); configure secrets, protection rules, and approvers on those environments in the repo settings.
+
+4. **Forks and labels**  
+   Your team can still use **PR labels and branch policies** in addition to the release branch model; wire any label-driven automation in your own workflows on top of this template.
 
 ## Features
 
-### 🔄 Reusable Workflows
+### Reusable workflows
 
-The template provides modular, reusable GitHub Actions workflows that can be called from your project workflows:
+Callable workflows (used via `workflow_call`):
 
-- **`__call__build.yaml`** - Build workflow submodule for compiling and building projects
-- **`__call__checks.yaml`** - Testing and validation workflow submodule
-- **`__call__publish.yaml`** - Publishing workflow submodule for artifact distribution
-- **`__call__release.yaml`** - Release workflow submodule for version management
+- **`__call__checks.yaml`** – validation / tests (no inputs in the template; extend the job in your copy as needed).
+- **`__call__build.yaml`** – build step; **inputs:** `version`, `artifact-name`.
+- **`__call__publish.yaml`** – publish step; **inputs:** `environment`, `artifact-name`. The job uses `environment: ${{ inputs.environment }}` so GitHub Environment rules apply.
 
-### 🤖 Automation
+### Top-level orchestration
 
-- **Auto-merge Dependabot PRs** - Automatically merges Dependabot pull requests when all checks pass
-  - Intelligent mergeable status checking with retry logic
-  - Validates PR author and workflow completion before merging
-  - Prevents infinite loops with maximum retry attempts
+- **`pull-request-check.yaml`** – on pull requests targeting `main`, calls `__call__checks.yaml`.
+- **`release.yaml`** – on `push` to `release/*.*.x`, runs version extraction, checks, test build + publish, production build + publish, then creates `v*.*.*` tag.
 
-- **Pull Request Checks** - Automated validation workflow that runs on pull requests to main branch
+The older standalone `publish` dispatch workflow and the `__call__release` split have been **removed** in favor of the integrated release branch pipeline above.
 
-- **Dependabot Configuration** - Automated dependency updates for GitHub Actions
+### Automation
 
-## Repository Structure
+- **Auto-merge Dependabot PRs** (when checks pass) – see `auto-merge.yaml`
+- **Dependabot** – GitHub Actions updates, see `.github/dependabot.yaml`
+- **CODEOWNERS** – see `.github/CODEOWNERS`
+
+## Repository structure
 
 ```
 .
 ├── .github/
 │   ├── workflows/
-│   │   ├── __call__build.yaml      # Reusable build workflow
-│   │   ├── __call__checks.yaml     # Reusable checks workflow
-│   │   ├── __call__publish.yaml    # Reusable publish workflow
-│   │   ├── __call__release.yaml    # Reusable release workflow
-│   │   ├── auto-merge.yaml         # Auto-merge Dependabot PRs
-│   │   ├── pull-request-check.yaml # PR validation workflow
-│   │   ├── publish.yaml            # Publish workflow
-│   │   └── release.yaml            # Release workflow
-│   ├── CODEOWNERS                  # Code ownership configuration
-│   ├── dependabot.yaml            # Dependabot configuration
-│   └── merge-instructions.md       # Template merging guidelines
-├── CONTRIBUTING.md                 # Contribution guidelines
-└── README.md                       # This file
+│   │   ├── __call__build.yaml       # Reusable build (version, artifact)
+│   │   ├── __call__checks.yaml      # Reusable checks
+│   │   ├── __call__publish.yaml     # Reusable publish (environment, artifact)
+│   │   ├── auto-merge.yaml          # Auto-merge Dependabot PRs
+│   │   ├── pull-request-check.yaml  # PR checks to main
+│   │   └── release.yaml              # Release branch → test/prod + tag
+│   ├── CODEOWNERS
+│   ├── dependabot.yaml
+│   └── merge-instructions.md
+├── CONTRIBUTING.md
+└── README.md
 ```
+
+Optional: `.cursor/rules/` may contain maintainer rules for local git and template merges; they are not required for library consumers.
 
 ## Usage
 
-### Using This Template
+### Adopting this template (keep history)
 
-**Important**: This repository is designed to be reused **while keeping git history**. This allows template updates to be merged and adopted later, maintaining a connection to the original template repository.
-
-1. **Clone the Repository**: Clone this repository to preserve the complete git history:
+1. **Clone** this repository (preserves full history):
    ```bash
-   git clone <template-repository-url> <your-project-name>
+   git clone https://github.com/starforge-universe/starforge-library-template.git <your-project-name>
    cd <your-project-name>
    ```
 
-2. **Set Up Your Remote**: Change the remote origin to point to your new repository:
+2. **Point `origin` at your library repo:**
    ```bash
    git remote set-url origin <your-new-repository-url>
    ```
 
-3. **Add Template Remote**: Add the template repository as a remote source to enable merging updates:
+3. **Add a `template` remote** for upstream automation you want to merge from (example: devops or future Starforge template repos):
    ```bash
-   git remote add template <template-repository-url>
+   git remote add template <template-repo-url>
    git fetch template
    ```
 
-4. **Merge Template Updates**: When you want to adopt the latest template changes, follow the [Template Merging Process](.github/merge-instructions.md) to merge updates from the template remote while preserving your project-specific changes.
+4. **Merge template updates** when you want them: follow [merge-instructions.md](.github/merge-instructions.md) and your own dependency/version conflict policy.
 
-5. **Customize Workflows**: Adapt the reusable workflows (`__call__*.yaml`) to match your project's specific build, test, and deployment requirements while maintaining compatibility with template updates.
+5. **Customize** the `__call__*.yaml` jobs to invoke your build tool, test runner, and package registry; keep `workflow_call` `inputs` compatible with `release.yaml` unless you change the orchestration.
 
-**Note**: Cloning preserves the complete git history, enabling you to merge template updates later. Avoid using GitHub's "Use this template" button, as it creates a new repository without preserving commit history.
+**Note:** Avoid only using “Use this template” if you need mergeable history from this repo; cloning keeps that option open.
 
-### Workflow Integration
+### Calling reusable workflows
 
-To use the reusable workflows in your project, reference them in your workflow files:
+`__call__build` and `__call__publish` require `with` when used from a caller workflow, for example:
 
 ```yaml
 jobs:
   build:
     uses: ./.github/workflows/__call__build.yaml
-  
-  checks:
-    uses: ./.github/workflows/__call__checks.yaml
+    with:
+      version: '1.2.3'
+      artifact-name: 'package-production'
 ```
 
-## Auto-Merge Workflow
+## Auto-merge workflow
 
-The auto-merge workflow automatically merges Dependabot pull requests when:
+The auto-merge workflow merges eligible Dependabot PRs when checks pass, with mergeability retry logic. See [`.github/workflows/auto-merge.yaml`](.github/workflows/auto-merge.yaml) for details.
 
-- All checks have passed successfully
-- The PR is from `dependabot[bot]`
-- The PR is mergeable (with intelligent retry logic)
+## Template merging process
 
-The workflow includes:
-- **Smart Retry Logic**: Waits up to 60 seconds (12 attempts × 5 seconds) for GitHub to calculate mergeability
-- **Early Exit**: Stops checking as soon as mergeable status is determined
-- **Error Handling**: Provides detailed error messages if mergeability cannot be determined
+High level:
 
-## Template Merging Process
+1. Update local `main` and fetch all remotes (including `template`)
+2. Create a branch for the template merge
+3. Merge or integrate from `template/main` (or the branch your process uses)
+4. Resolve conflicts: keep your project’s dependencies and adopt template file versions where your merge instructions say to
+5. Run checks, open a PR, merge when green
 
-This repository is designed to maintain git history, allowing template updates to be merged and adopted. When updating your repository with template changes:
-
-1. Update your local main branch
-2. Fetch all remotes (including the template remote)
-3. Create a feature branch for the template update
-4. Merge changes from the template remote's main branch into your feature branch
-5. Resolve conflicts according to the guidelines:
-   - Keep your project-specific dependencies but adopt version numbers from the template
-   - Preserve your project-specific customizations
-   - Ask for help when unsure about conflict resolution
-6. Run checks locally using `./.github/workflows/__call__checks.yaml`
-7. Push the feature branch and open a pull request
-8. After merge, switch back to main and clean up the feature branch
-
-This process ensures that template improvements can be continuously adopted while preserving your project's git history and customizations.
-
-See [merge-instructions.md](.github/merge-instructions.md) for detailed steps.
+Details: [merge-instructions.md](.github/merge-instructions.md)
 
 ## Dependabot
 
-Dependabot is configured to:
-- Check for GitHub Actions updates daily
-- Automatically create pull requests for updates
-- Auto-merge PRs when checks pass (via auto-merge workflow)
+- Daily checks (configurable) for GitHub Actions
+- PRs for updates; optional auto-merge when checks pass and policy allows
 
-## Code Ownership
+## Code ownership
 
-Code ownership is managed via `.github/CODEOWNERS`. All changes require approval from the code owners before merging.
+Changes are routed through `.github/CODEOWNERS` per repository settings.
 
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to this project.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
@@ -145,4 +154,4 @@ This template is part of the StarForge Universe project.
 
 ## Support
 
-For issues, questions, or contributions, please open an issue or contact the code owners.
+For issues or questions, open an issue in this repository or contact the code owners in `CODEOWNERS`.
