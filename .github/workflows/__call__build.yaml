@@ -2,6 +2,15 @@ name: 'Submodule - Build'
 
 on:
   workflow_call:
+    inputs:
+      version:
+        required: true
+        description: 'Version to build'
+        type: string
+      artifact-name:
+        required: true
+        description: 'Artifact name'
+        type: string
 
 jobs:
   build:
