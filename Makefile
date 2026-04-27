@@ -1,6 +1,6 @@
 .PHONY: help venv install install-dev lint lint-unit-tests lint-integration-tests test-unit test-integration test-unit-coverage build check-dist upload-pypi clean check start
 
-# Liquisketch — Python package under ./liquisketch/
+# Python package under ./starforge_library_template/
 
 PYTHON := python3
 VENV := .venv
@@ -14,7 +14,7 @@ PYLINTFLAGS_SRC := --fail-under=9
 # Tests use many short functions without docstrings; threshold is looser.
 PYLINTFLAGS_TESTS := --fail-under=8
 
-SRC_DIR := liquisketch
+SRC_DIR := starforge_library_template
 TEST_DIR := tests
 UNIT_TEST_DIR := $(TEST_DIR)/unit
 INTEGRATION_TEST_DIR := $(TEST_DIR)/integration
@@ -43,7 +43,7 @@ help:
 	@echo "  make upload-pypi             - twine upload $(BUILD_DIR)/* (set TWINE_*, see help)"
 	@echo "  make clean                   - Remove caches, build artifacts, coverage reports"
 	@echo "  make check                   - Run all lints plus unit and integration tests"
-	@echo "  make start                   - Show liquisketch CLI --help (smoke check)"
+	@echo "  make start                   - Show starforge_library_template CLI --help (smoke check)"
 
 venv:
 	@if [ ! -d "$(VENV)" ]; then \
@@ -159,6 +159,6 @@ check: lint lint-unit-tests lint-integration-tests test-unit test-integration
 	@echo "Check completed."
 
 start:
-	@echo "liquisketch CLI (smoke check):"
+	@echo "starforge_library_template CLI (smoke check):"
 	@test -d "$(VENV)" || (echo "Run 'make venv' first."; exit 1)
-	@$(PYTHON_VENV) -m liquisketch --help
+	@$(PYTHON_VENV) -m starforge_library_template --help

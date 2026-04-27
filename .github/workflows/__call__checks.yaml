@@ -24,7 +24,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
 
-      # Creates .venv and editable install so Makefile targets (liquisketch/.venv/bin/*) work.
+      # Creates .venv and editable install so Makefile targets work.
       - name: 'Install dependencies (make install-dev)'
         run: make install-dev
 
